@@ -54,15 +54,25 @@ public class Tester
 
 	private void writeTest(Process task, File testCase)
 	{
-		try(InputStream in = new FileInputStream(testCase);
-			OutputStream out = task.getOutputStream())
+		InputStream in = null;
+		try
+		{
+			in = new FileInputStream(testCase);
+		}
+		catch(FileNotFoundException e1)
+		{
+			// TODO Auto-generated catch block
+			Logger.getAnonymousLogger().log(Level.SEVERE, "Wyjątek", e1);
+		}
+		OutputStream out = task.getOutputStream();
+		try
 		{
 			rewrite(in, out);
 		}
 		catch(IOException e)
-		{	
+		{
 			// TODO Auto-generated catch block
-			Logger.getAnonymousLogger().log(Level.SEVERE,"Wyjątek",e);
+			Logger.getAnonymousLogger().log(Level.SEVERE, "Wyjątek", e);
 		}
 	}
 
@@ -74,18 +84,25 @@ public class Tester
 	}
 
 	private void saveResult(Process task, File testCase)
+			throws FileNotFoundException
 	{
-		
+
 		File outputFile = new File(results, testCase.getName());
-		try(OutputStream output = new FileOutputStream(outputFile);
-				InputStream input = task.getInputStream())
+		OutputStream output = new FileOutputStream(outputFile);
+		InputStream input = task.getInputStream();
+		try
 		{
 			rewrite(input, output);
-		}	
+		}
 		catch(FileNotFoundException e)
 		{
 			Logger.getAnonymousLogger().log(Level.SEVERE,
 					"Nie mamy wyjścia...", e);
+		}
+		catch(IOException e)
+		{
+			// TODO Auto-generated catch block
+			Logger.getAnonymousLogger().log(Level.SEVERE, "Wyjątek", e);
 		}
 	}
 
