@@ -96,7 +96,7 @@ public class Compiler
 		return output;
 	}
 
-	private String getCompilerFlags()
+	protected String getCompilerFlags()
 	{
 		return "-O2 -static -lm";
 	}
