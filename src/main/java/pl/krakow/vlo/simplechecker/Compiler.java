@@ -1,6 +1,5 @@
 package pl.krakow.vlo.simplechecker;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -28,16 +27,8 @@ public class Compiler
 		this.root = root;
 	}
 
-	/**
-	 * Kompluje pliki przy pomocy
-	 * 
-	 * @param what
-	 *            plik źródłowy
-	 * @return binarka
-	 */
-	public File compile()
+	private File findFileToCompile(File root)
 	{
-		File output = new File(root, "out");
 		File[] toCompile = root.listFiles(new FilenameFilter()
 		{
 			@Override
@@ -49,50 +40,68 @@ public class Compiler
 		if(toCompile.length > 1 || toCompile.length == 0)
 			throw new IllegalStateException(
 					"Dwa lub więcej || nie ma plików plików *.cpp. Jestem głupi i nie wiem co robić :(");
-		File what = toCompile[0];
-		log.log(Level.INFO,
-				"Przygotowania do kompilacji pliku " + what.getName());
-		String command = getCompilerCommand() + " " + getCompilerFlags() + " "
+		return toCompile[0];
+	}
+
+	private String generateCommand(File what, File output)
+	{
+		return getCompilerCommand() + " " + getCompilerFlags() + " "
 				+ what.getAbsolutePath() + " " + getOutputSwitch() + " "
 				+ output.getAbsolutePath();
-		log.info(command);
-		BufferedReader input = null;
-		try
+	}
+
+	private void printProcessOutput(Process commpilation)
+	{
+		StringBuilder builder = new StringBuilder();
+		try (BufferedReader input = new BufferedReader(new InputStreamReader(
+				commpilation.getInputStream())))
 		{
-			Process commpilation = Runtime.getRuntime().exec(command);
-			commpilation.waitFor();
-			StringBuilder builder = new StringBuilder();
-			input = new BufferedReader(new InputStreamReader(
-					commpilation.getInputStream()));
 			while(input.ready())
 				builder.append(input.readLine());
 			if(commpilation.exitValue() != 0)
 				throw new IllegalStateException("\n" + builder.toString());
+			log.info(builder.toString());
+		}
+		catch(IOException e)
+		{
+			// TODO Auto-generated catch block
+			log.log(Level.SEVERE, "Wyjątek", e);
+		}
+	}
+
+	/**
+	 * Kompluje pliki przy pomocy
+	 * 
+	 * @param what
+	 *            plik źródłowy
+	 * @return binarka
+	 */
+	public File compile()
+	{
+		File output = new File(root, "out");
+		File what = findFileToCompile(root);
+		log.log(Level.INFO, "Przygotowania do kompilacji pliku {}",
+				what.getName());
+		String command = generateCommand(what, output);
+		log.info(command);
+		try
+		{
+			Process commpilation = Runtime.getRuntime().exec(command);
+			commpilation.waitFor();
+			printProcessOutput(commpilation);
 		}
 		catch(IOException e)
 		{
 			log.log(Level.SEVERE, "Kompilacja się nie powiodła", e);
+			throw new IllegalStateException(e);
 		}
 		catch(InterruptedException e)
 		{
 			// TODO Auto-generated catch block
 			log.log(Level.SEVERE, "Wyjątek", e);
 		}
-		finally
-		{
-			try
-			{
-				if(input != null)
-					input.close();
-			}
-			catch(IOException e)
-			{
-				// TODO Auto-generated catch block
-				log.log(Level.SEVERE, "Wyjątek", e);
-			}
-		}
-		log.log(Level.INFO, "skompilowałem plik " + what.toString()
-				+ " do pliku " + output.getAbsolutePath());
+		log.log(Level.INFO, "skompilowałem plik {} do pliku {} ", new Object[] {
+				what, output });
 		return output;
 	}
 

@@ -45,18 +45,9 @@ public class Tester
 
 	private void writeTest(Process task, File testCase)
 	{
-		InputStream in = null;
-		try
-		{
-			in = new FileInputStream(testCase);
-		}
-		catch(FileNotFoundException e1)
-		{
-			// TODO Auto-generated catch block
-			Logger.getAnonymousLogger().log(Level.SEVERE, "Wyjątek", e1);
-		}
-		OutputStream out = task.getOutputStream();
-		try
+
+		try (OutputStream out = task.getOutputStream();
+				InputStream in = new FileInputStream(testCase))
 		{
 			rewrite(in, out);
 		}
